@@ -84,7 +84,7 @@ def create_single_football_env(seed):
   env = football_env.create_environment(
       env_name=args.level, stacked=('stacked' in args.state),
       rewards=args.reward_experiment,
-      logdir=logger.get_dir(),
+    #   logdir=logger.get_dir(),
       enable_goal_videos=args.dump_scores and (seed == 0),
       enable_full_episode_videos=args.dump_full_episodes and (seed == 0),
       render=args.render and (seed == 0),
@@ -99,9 +99,9 @@ if __name__ == "__main__":
     parser.add_argument('--game', help='Atari game', default='pong')
     parser.add_argument('--run_ID', help='run identifier (logging)', type=int, default=0)
     parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=None)
-    args = parser.parse_args()
+    args1 = parser.parse_args()
     build_and_train(
-        game=args.game,
-        run_ID=args.run_ID,
-        cuda_idx=args.cuda_idx,
+        game=args1.game,
+        run_ID=args1.run_ID,
+        cuda_idx=args1.cuda_idx,
     )
