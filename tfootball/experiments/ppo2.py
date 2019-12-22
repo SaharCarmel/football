@@ -50,7 +50,7 @@ class Args():
         print('repr is missing')
         return ''
 
-def build_and_train(game="pong", run_ID=0, cuda_idx=None):
+def build_and_train(game="academy_empty_goal_close", run_ID=0, cuda_idx=None):
     sampler = SerialSampler(
         EnvCls=create_single_football_env,
         env_kwargs=dict(game=game),
@@ -85,8 +85,8 @@ def create_single_football_env(seed):
       env_name=args.level, stacked=('stacked' in args.state),
       rewards=args.reward_experiment,
     #   logdir=logger.get_dir(),
-      enable_goal_videos=args.dump_scores and (seed == 0),
-      enable_full_episode_videos=args.dump_full_episodes and (seed == 0),
+    #   enable_goal_videos=args.dump_scores and (seed == 0),
+    #   enable_full_episode_videos=args.dump_full_episodes and (seed == 0),
       render=args.render and (seed == 0),
       dump_frequency=50 if args.render and seed == 0 else 0)
 #   env = monitor.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(),
@@ -98,10 +98,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--game', help='Atari game', default='pong')
     parser.add_argument('--run_ID', help='run identifier (logging)', type=int, default=0)
-    parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=None)
+    parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=0)
     args1 = parser.parse_args()
     build_and_train(
-        game=args1.game,
         run_ID=args1.run_ID,
         cuda_idx=args1.cuda_idx,
     )
