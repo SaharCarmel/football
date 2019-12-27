@@ -1,0 +1,7 @@
+level: 'academy_empty_goal_close'
+state: 'extracted_stacked'
+# state: 'False'
+reward_experiment: 'scoring'
+dump_scores: False
+dump_full_episodes: False
+render: True
