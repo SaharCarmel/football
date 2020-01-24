@@ -22,7 +22,7 @@ from rlpyt.utils.logging.context import logger_context
 import argparse
 import os
 from rlpyt.agents.pg.atari import AtariFfAgent, AtariLstmAgent
-
+from rlpyt.agents.pg.coach import Coach
 
 import gfootball.env as football_env
 
@@ -51,46 +51,57 @@ class Args():
         return ''
 
 
-def build_and_train(game="academy_empty_goal_close", run_ID=0, cuda_idx=None):
-    # bandit = Bandit()
+def build_and_train(game="academy_empty_goal_close", run_ID=1, cuda_idx=None):
+    env_vector_size = 4
+    coach = Coach(envOptions=['academy_empty_goal_close',
+                              'academy_empty_goal',
+                              'academy_run_to_score',
+                              'academy_run_to_score_with_keeper',
+                              'academy_counterattack_hard',
+                            ],
+                  vectorSize=env_vector_size,
+                  algo='Bandit',
+                  initialQ=1)
     sampler = SerialSampler(
         EnvCls=create_single_football_env,
         env_kwargs=dict(game=game),
         eval_env_kwargs=dict(game=game),
-        batch_T=4,  # Four time-steps per sampler iteration.
-        batch_B=1,
+        batch_T=5,  # Four time-steps per sampler iteration.
+        batch_B=env_vector_size,
         max_decorrelation_steps=0,
         eval_n_envs=10,
         eval_max_steps=int(10e3),
         eval_max_trajectories=5,
+        coach = coach,
     )
     algo = PPO(minibatches=1)  # Run with defaults.
-    agent = AtariLstmAgent()
+    agent = AtariLstmAgent() # TODO: move to ff
     runner = MinibatchRlEval(
         algo=algo,
         agent=agent,
         sampler=sampler,
-        n_steps=50e6,
+        n_steps=1e6,
         log_interval_steps=1e3,
         affinity=dict(cuda_idx=cuda_idx),
     )
     config = dict(game=game)
-    name = "dqn_" + game
+    name = "soccer_" + game
     log_dir = "example_1"
     with logger_context(log_dir, run_ID, name, config, snapshot_mode="last"):
         runner.train()
 
 
-def create_single_football_env(seed):
+def create_single_football_env(seed, level='academy_empty_goal_close'):
     """Creates gfootball environment."""
     env = football_env.create_environment(
-        env_name=args.level, stacked=('stacked' in args.state),
+        env_name=level, stacked=('stacked' in args.state),
         rewards=args.reward_experiment,
         #   logdir=logger.get_dir(),
         #   enable_goal_videos=args.dump_scores and (seed == 0),
         #   enable_full_episode_videos=args.dump_full_episodes and (seed == 0),
         render=args.render and (seed == 0),
         dump_frequency=50 if args.render and seed == 0 else 0)
+    print("Creating env:{}".format(level))
 #   env = monitor.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(),
 #                                                                str(seed)))
     return env
