@@ -72,14 +72,14 @@ fig.savefig("corner_2_vs_1_keeper.jpg")
 print("Ball")
 print("builder.SetBallPosition({:.4f}, {:.4f})".format(ball_point[0][0],ball_point[0][1]))
 
+def_roles = ["GK", "LB", "CB", "RB"]
+atk_roles = ["LM", "CM", "RM", "CF"]
 print("Defending team")
-for item in defending_points.transpose():
-    print("builder.AddPlayer({:.4f}, {:.4f}, e_PlayerRole_GK)".format(item[0], item[1]))
+for item, role in zip(defending_points.transpose(), def_roles):
+    print("builder.AddPlayer({:.4f}, {:.4f}, e_PlayerRole_{})".format(item[0], item[1], role))
 
 print("Attacking team")
-for item in attacking_points.transpose():
-    print("builder.AddPlayer({:.4f}, {:.4f}, e_PlayerRole_GK)".format(item[0], item[1]))
+for item, role in zip(attacking_points.transpose(), atk_roles):
+    print("builder.AddPlayer({:.4f}, {:.4f}, e_PlayerRole_{})".format(item[0], item[1], role))
 
-
-x = 2
 
