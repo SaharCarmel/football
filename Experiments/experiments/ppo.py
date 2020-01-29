@@ -39,6 +39,10 @@ class Args():
         self.dump_full_episodes = self.load_param(
             yamlfile, "dump_full_episodes")
         self.render = self.load_param(yamlfile, "render")
+        self.initialQ = self.load_param(yamlfile, "initialQ") 
+        self.beta = self.load_param(yamlfile, "Beta") 
+        self.envVectorSize = self.load_param(yamlfile, "env_vector_size")
+        self.__dict__
 
     def load_param(self, yamlfile, parm_name):
         with open(yamlfile) as f:
@@ -52,16 +56,16 @@ class Args():
 
 
 def build_and_train(game="academy_empty_goal_close", run_ID=1, cuda_idx=None):
-    env_vector_size = 4
+    env_vector_size = args.envVectorSize
     coach = Coach(envOptions=['academy_empty_goal_close',
                               'academy_empty_goal',
                               'academy_run_to_score',
                               'academy_run_to_score_with_keeper',
-                              'academy_counterattack_hard',
                             ],
                   vectorSize=env_vector_size,
                   algo='Bandit',
-                  initialQ=1)
+                  initialQ=args.initialQ, 
+                  beta=args.beta)
     sampler = SerialSampler(
         EnvCls=create_single_football_env,
         env_kwargs=dict(game=game),
@@ -69,10 +73,11 @@ def build_and_train(game="academy_empty_goal_close", run_ID=1, cuda_idx=None):
         batch_T=5,  # Four time-steps per sampler iteration.
         batch_B=env_vector_size,
         max_decorrelation_steps=0,
-        eval_n_envs=10,
+        eval_n_envs=1,
         eval_max_steps=int(10e3),
         eval_max_trajectories=5,
         coach = coach,
+        eval_env = 'academy_empty_goal_close',
     )
     algo = PPO(minibatches=1)  # Run with defaults.
     agent = AtariLstmAgent() # TODO: move to ff
@@ -80,14 +85,14 @@ def build_and_train(game="academy_empty_goal_close", run_ID=1, cuda_idx=None):
         algo=algo,
         agent=agent,
         sampler=sampler,
-        n_steps=1e6,
+        n_steps=10e6,
         log_interval_steps=1e3,
         affinity=dict(cuda_idx=cuda_idx),
     )
     config = dict(game=game)
     name = "soccer_" + game
     log_dir = "example_1"
-    with logger_context(log_dir, run_ID, name, config, snapshot_mode="last"):
+    with logger_context(log_dir, run_ID, name, log_params=vars(args), snapshot_mode="last"):
         runner.train()
 
 
@@ -96,11 +101,11 @@ def create_single_football_env(seed, level='academy_empty_goal_close'):
     env = football_env.create_environment(
         env_name=level, stacked=('stacked' in args.state),
         rewards=args.reward_experiment,
-        #   logdir=logger.get_dir(),
-        #   enable_goal_videos=args.dump_scores and (seed == 0),
-        #   enable_full_episode_videos=args.dump_full_episodes and (seed == 0),
+        logdir='/dump',
+        enable_goal_videos=args.dump_scores and (seed == 0),
+        enable_full_episode_videos=args.dump_full_episodes and (seed == 0),
         render=args.render and (seed == 0),
-        dump_frequency=50 if args.render and seed == 0 else 0)
+        dump_frequency=1 if args.render and seed == 0 else 0)
     print("Creating env:{}".format(level))
 #   env = monitor.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(),
 #                                                                str(seed)))
@@ -108,7 +113,7 @@ def create_single_football_env(seed, level='academy_empty_goal_close'):
 
 
 if __name__ == "__main__":
-    args = Args('football/Experiments/configs/first.yaml')
+    args = Args('football/Experiments/configs/first.yaml') ## TODO: move a copy of the file to the data file
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--game', help='Atari game', default='pong')
@@ -116,6 +121,7 @@ if __name__ == "__main__":
         '--run_ID', help='run identifier (logging)', type=int, default=0)
     parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=0)
     args1 = parser.parse_args()
+    print(args1.run_ID)
     build_and_train(
         run_ID=args1.run_ID,
         cuda_idx=args1.cuda_idx,
