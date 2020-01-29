@@ -1,7 +1,19 @@
-level: 'academy_empty_goal_close'
+exp_name: "soccer_testing_on_hard_env_with_coach"
+env_options: ['academy_empty_goal_close',
+'academy_empty_goal',
+'academy_run_to_score',
+'academy_run_to_score_with_keeper',
+'academy_counterattack_easy'
+]
+eval_env: 'academy_counterattack_easy'
 state: 'extracted_stacked'
-# state: 'False'
 reward_experiment: 'scoring'
 dump_scores: False
 dump_full_episodes: False
-render: True
+render: False
+initialQ: 1
+Beta: 0.1
+env_vector_size: 4
+eval_num_of_envs: 5
+num_of_steps: 1e6
+level: 'academy_counterattack_easy'

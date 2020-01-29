@@ -32,17 +32,20 @@ import yaml
 
 class Args():
     def __init__(self, yamlfile):
+        self.name = self.load_param(yamlfile,"exp_name")
         self.state = self.load_param(yamlfile, "state")
         self.reward_experiment = self.load_param(yamlfile, "reward_experiment")
         self.dump_scores = self.load_param(yamlfile, "dump_scores")
-        self.dump_full_episodes = self.load_param(
-            yamlfile, "dump_full_episodes")
+        self.dump_full_episodes = self.load_param(yamlfile, "dump_full_episodes")
         self.render = self.load_param(yamlfile, "render")
-        self.initialQ = self.load_param(yamlfile, "initialQ") 
+        self.initialQ = self.load_param(yamlfile, "initialQ")
         self.beta = self.load_param(yamlfile, "Beta") 
         self.envVectorSize = self.load_param(yamlfile, "env_vector_size")
         self.envOptions = self.load_param(yamlfile, "env_options")
-
+        self.evalNumOfEnvs = self.load_param(yamlfile, "eval_num_of_envs")
+        self.numOfSteps = float(self.load_param(yamlfile, "num_of_steps"))
+        self.evalEnv = self.load_param(yamlfile, "eval_env")
+    
     def load_param(self, yamlfile, parm_name):
         with open(yamlfile) as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
@@ -69,11 +72,11 @@ def build_and_train(game="academy_empty_goal_close", run_ID=1, cuda_idx=None):
         batch_T=5,  # Four time-steps per sampler iteration.
         batch_B=env_vector_size,
         max_decorrelation_steps=0,
-        eval_n_envs=1,
+        eval_n_envs=args.evalNumOfEnvs,
         eval_max_steps=int(10e3),
         eval_max_trajectories=5,
         coach = coach,
-        eval_env = 'academy_empty_goal_close',
+        eval_env = args.evalEnv,
     )
     algo = PPO(minibatches=1)  # Run with defaults.
     agent = AtariLstmAgent() # TODO: move to ff
@@ -81,12 +84,11 @@ def build_and_train(game="academy_empty_goal_close", run_ID=1, cuda_idx=None):
         algo=algo,
         agent=agent,
         sampler=sampler,
-        n_steps=10e6,
+        n_steps=args.numOfSteps,
         log_interval_steps=1e3,
         affinity=dict(cuda_idx=cuda_idx),
     )
-    config = dict(game=game)
-    name = "soccer_" + game
+    name = args.name
     log_dir = "example_1"
     with logger_context(log_dir, run_ID, name, log_params=vars(args), snapshot_mode="last"):
         runner.train()
@@ -97,11 +99,11 @@ def create_single_football_env(seed, level='academy_empty_goal_close'):
     env = football_env.create_environment(
         env_name=level, stacked=('stacked' in args.state),
         rewards=args.reward_experiment,
-        logdir='/dump',
-        enable_goal_videos=args.dump_scores and (seed == 0),
-        enable_full_episode_videos=args.dump_full_episodes and (seed == 0),
+        # logdir="/home/sahar/downloads",
+        #   enable_goal_videos=args.dump_scores and (seed == 0),
+        #   enable_full_episode_videos=args.dump_full_episodes and (seed == 0),
         render=args.render and (seed == 0),
-        dump_frequency=1 if args.render and seed == 0 else 0)
+        dump_frequency=50 if args.render and seed == 0 else 0)
     print("Creating env:{}".format(level))
 #   env = monitor.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(),
 #                                                                str(seed)))
@@ -109,7 +111,7 @@ def create_single_football_env(seed, level='academy_empty_goal_close'):
 
 
 if __name__ == "__main__":
-    args = Args('football/Experiments/configs/first.yaml') ## TODO: move a copy of the file to the data file
+    args = Args('football/Experiments/configs/first.yaml')
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
