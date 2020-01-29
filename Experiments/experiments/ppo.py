@@ -32,7 +32,6 @@ import yaml
 
 class Args():
     def __init__(self, yamlfile):
-        self.level = self.load_param(yamlfile, "level")
         self.state = self.load_param(yamlfile, "state")
         self.reward_experiment = self.load_param(yamlfile, "reward_experiment")
         self.dump_scores = self.load_param(yamlfile, "dump_scores")
@@ -42,7 +41,7 @@ class Args():
         self.initialQ = self.load_param(yamlfile, "initialQ") 
         self.beta = self.load_param(yamlfile, "Beta") 
         self.envVectorSize = self.load_param(yamlfile, "env_vector_size")
-        self.__dict__
+        self.envOptions = self.load_param(yamlfile, "env_options")
 
     def load_param(self, yamlfile, parm_name):
         with open(yamlfile) as f:
@@ -51,17 +50,14 @@ class Args():
         pass
 
     def __repr__(self):
-        print('repr is missing')
+        for key in self.__dict__.keys():
+            print("{} : {}".format(key, self.__dict__[key]))
         return ''
 
 
 def build_and_train(game="academy_empty_goal_close", run_ID=1, cuda_idx=None):
     env_vector_size = args.envVectorSize
-    coach = Coach(envOptions=['academy_empty_goal_close',
-                              'academy_empty_goal',
-                              'academy_run_to_score',
-                              'academy_run_to_score_with_keeper',
-                            ],
+    coach = Coach(envOptions=args.envOptions,
                   vectorSize=env_vector_size,
                   algo='Bandit',
                   initialQ=args.initialQ, 
@@ -116,12 +112,10 @@ if __name__ == "__main__":
     args = Args('football/Experiments/configs/first.yaml') ## TODO: move a copy of the file to the data file
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--game', help='Atari game', default='pong')
     parser.add_argument(
         '--run_ID', help='run identifier (logging)', type=int, default=0)
     parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=0)
     args1 = parser.parse_args()
-    print(args1.run_ID)
     build_and_train(
         run_ID=args1.run_ID,
         cuda_idx=args1.cuda_idx,
